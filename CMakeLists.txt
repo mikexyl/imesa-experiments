@@ -8,14 +8,7 @@ message(STATUS "================  CMake iMESA Experiments  =====================
 find_package(GTSAM REQUIRED)
 include_directories(${GTSAM_INCLUDE_DIR})
 
-# Dependency - The actual iMESA implementation and the IncrementalSAMAgent interface
-include(FetchContent)
-FetchContent_Declare(
-  imesa
-  GIT_REPOSITORY  https://github.com/rpl-cmu/imesa.git
-  GIT_TAG         main
-)
-FetchContent_MakeAvailable(imesa)
+find_package(imesa REQUIRED)
 
 # Build the methods we evaluate
 add_subdirectory(prior_work)
