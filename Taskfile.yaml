@@ -1,0 +1,15 @@
+version: '3'
+
+tasks:
+  run-trial:
+    cmds:
+      - build/experiments/run-trial
+
+  make-multi-robot-dataset-2d:
+    cmds:
+      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data -n 2d_{{.nr}}robots -nr {{.nr}}
+    vars:
+      nr: 5
+    
+
+
