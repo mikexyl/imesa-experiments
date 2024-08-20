@@ -9,6 +9,7 @@ import numpy as np
 from helpers.method_style_sheet import METHOD_STYLE_SHEET
 from helpers.parsing import read_results_metrics_all
 from matplotlib.ticker import Locator
+from matplotlib.gridspec import GridSpec
 
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams["mathtext.fontset"] = "cm"
@@ -90,7 +91,9 @@ if __name__ == "__main__":
     dataset = parser.parseDataset(args.dataset_file, False)
 
     # Lets setup the figure
-    fig, axes = plt.subplots(3, 1, figsize=(6, 8), height_ratios=[1.5, 1, 1])
+    fig = plt.figure(figsize=(6, 8))  # Set the figure size
+    gs = GridSpec(3, 1, height_ratios=[1.5, 1, 1])  # Define a 3x1 grid with height ratios
+    axes = [fig.add_subplot(gs[i]) for i in range(3)]
 
     for mthd_result_dir in args.method_result_dirs:
         iterations, metrics = read_results_metrics_all(mthd_result_dir)

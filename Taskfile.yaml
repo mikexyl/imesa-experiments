@@ -1,6 +1,25 @@
-version: '3'
+version: "3"
+
+vars:
+  ros_setup: /opt/ros/humble/setup.sh
+
+includes:
+  raido:
+    taskfile: ../raido_imesa_experiments/Taskfile.yaml
+    dir: ../raido_imesa_experiments
 
 tasks:
+  build:
+    cmds:
+      - cmake --preset default
+      - source /opt/ros/humble/setup.sh && cmake --build --preset default-build
+  
+  build-debug:
+    deps: [raido:build-debug]
+    cmds:
+      - cmake --preset config-debug
+      - source /opt/ros/humble/setup.sh && cmake --build --preset build-debug
+
   run-trial:
     cmds:
       - build/experiments/run-trial
@@ -10,6 +29,20 @@ tasks:
       - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data -n 2d_{{.nr}}robots -nr {{.nr}}
     vars:
       nr: 5
-    
 
+  run-raido:
+    cmds:
+      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" gdb --args build/experiments/run-trial -d {{.data_file}} -m raido -p {{.param_file}} -o {{.output_dir}} -r 10 -s 0 -t POSE2 -c {{.comm_file}}
+    vars:
+      LD_LIBRARY_PATH: /workspaces/src/g2o/install/lib:/workspaces/src/ORB_SLAM3/Thirdparty/DBoW2/lib:/usr/local/lib
+      comm_file: /workspaces/src/imesa-experiments/experiments/config/communication_models/pairwise.json
+      data_file: /workspaces/src/imesa-experiments/data/2d_5robots_0000.jrl
+      output_dir: /workspaces/src/imesa-experiments/outputs
+      param_file: /workspaces/src/raido_imesa_experiments/config/radio.json
 
+  plot-mean-residuals:
+    cmds:
+      - experiments/scripts/plot-mean-residual -d {{.data_file}} -r {{.output_dir}}
+    vars:
+      data_file: /workspaces/src/imesa-experiments/data/2d_5robots_0000.jrl
+      output_dir: /workspaces/src/imesa-experiments/outputs/2d_5robots_0000_RaiDO_2024-08-20_14-17-12

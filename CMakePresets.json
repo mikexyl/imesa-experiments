@@ -14,7 +14,16 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
         "imesa_DIR": "${sourceDir}/../imesa/build",
-        "jrl_DIR": "${sourceDir}/../jrl/build"
+        "jrl_DIR": "${sourceDir}/../jrl/build",
+        "nlohmann_json_DIR": "${sourceDir}/../json/build",
+        "raido_imesa_experiments_DIR": "${sourceDir}/../raido_imesa_experiments/build"
+      }
+    },
+    {
+      "name": "config-debug",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     }
   ],
@@ -22,6 +31,11 @@
     {
       "name": "default-build",
       "configurePreset": "default",
+      "jobs": 12
+    },
+    {
+      "name": "build-debug",
+      "configurePreset": "config-debug",
       "jobs": 12
     }
   ]

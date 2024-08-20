@@ -1,6 +1,6 @@
 project(imesa_experiments CXX C)
 cmake_minimum_required(VERSION 2.8.3)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 message(STATUS "================  CMake iMESA Experiments  ======================")
 

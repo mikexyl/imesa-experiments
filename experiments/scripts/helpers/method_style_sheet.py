@@ -38,5 +38,11 @@ METHOD_STYLE_SHEET = {
         "color": SNS_BLUE,
         "symbol": "*",
         "linestyle": "solid",
+    },
+    "RaiDO": {
+        "name": "RaiDO",
+        "color": SNS_ORANGE,
+        "symbol": "+",
+        "linestyle": "solid",
     }
 }

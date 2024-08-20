@@ -4,11 +4,12 @@ message(STATUS "================  Experiment Runner  ======================")
 find_package(Boost COMPONENTS program_options REQUIRED)
 find_package(jrl REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(raido_imesa_experiments REQUIRED)
 
 # Build the experiments module
 file(GLOB_RECURSE experiments_srcs "*.cpp" "*.h")
 add_library(experiments ${experiments_srcs})
-target_link_libraries(experiments jrl gtsam imesa ddfsam2)
+target_link_libraries(experiments jrl gtsam imesa ddfsam2 raido_imesa_experiments)
 target_include_directories(experiments PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Main Entry Point

@@ -5,6 +5,7 @@
 
 #include <gtsam/geometry/Pose2.h>
 #include <gtsam/geometry/Pose3.h>
+#include <raido_imesa_experiments/raido_agent.h>
 
 #include "baselines/baselines.h"
 #include "ddfsam2/ddfsam2.h"
@@ -40,6 +41,12 @@ std::shared_ptr<IncrementalSAMAgent> agent_factory(const RobotId& rid, const std
     ddfsam2::DDFSAM2AgentParams params;
     if (method_param_file != "") params = parseDDFSAM2AgentParams(method_param_file);
     return std::make_shared<ddfsam2::DDFSAM2Agent>(rid, params);
+  }
+  // RaiDO
+  /*********************************************************************************************************************/
+  else if (method_name == raido::RaiDOAgent::METHOD_NAME) {
+    raido::RaiDOAgent::Params params;
+    return std::make_shared<raido::RaiDOAgent>(params);
   }
   // Default
   /*********************************************************************************************************************/
