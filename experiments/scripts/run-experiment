@@ -95,6 +95,7 @@ def aligned_worker(
         "-c {}".format(comm_config) if comm_config != "" else "",
         pose_type,
     )
+    print(command)
     subprocess.call(command.split(" "))
 
 
@@ -112,6 +113,7 @@ def noalign_worker(
         "-c {}".format(comm_config) if comm_config != "" else "",
         pose_type,
     )
+    print(command)
     subprocess.call(command.split(" "))
 
 
@@ -126,6 +128,7 @@ def main():
 
     # Iterate over the independent variable
     for indep_var in args.independent_variables:
+        print(indep_var)
         # Setup variable directories
         indep_var_dataset_dir = os.path.join(datasets_dir, indep_var)
         indep_var_results_dir = os.path.join(results_dir, indep_var)
@@ -135,6 +138,8 @@ def main():
         indep_var_dataset_files = glob.glob(
             os.path.join(indep_var_dataset_dir, "*.jrl")
         )
+        print(indep_var_dataset_dir)
+        print(indep_var_dataset_files)
 
         for method, method_config in zip(args.methods, args.method_configs):
             os.makedirs(
@@ -175,4 +180,5 @@ def main():
 
 
 if __name__ == "__main__":
+    print(RUNNER)
     main()

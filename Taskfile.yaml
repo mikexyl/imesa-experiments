@@ -2,6 +2,11 @@ version: "3"
 
 vars:
   ros_setup: /opt/ros/humble/setup.sh
+  nr: 5
+  r: 5
+  comm_file: /workspaces/src/imesa-experiments/experiments/config/communication_models/pairwise.json
+  LD_LIBRARY_PATH: /workspaces/src/g2o/install/lib:/workspaces/src/ORB_SLAM3/Thirdparty/DBoW2/lib:/usr/local/lib
+  experiment_dir: /workspaces/src/imesa-experiments/data
 
 includes:
   raido:
@@ -10,10 +15,11 @@ includes:
 
 tasks:
   build:
+    deps: [raido:build]
     cmds:
       - cmake --preset default
       - source /opt/ros/humble/setup.sh && cmake --build --preset default-build
-  
+
   build-debug:
     deps: [raido:build-debug]
     cmds:
@@ -26,16 +32,12 @@ tasks:
 
   make-multi-robot-dataset-2d:
     cmds:
-      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data -n 2d_{{.nr}}robots -nr {{.nr}}
-    vars:
-      nr: 5
+      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/2d -n {{.nr}}robots -nr {{.nr}} -r {{.r}}
 
   run-raido:
     cmds:
-      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" gdb --args build/experiments/run-trial -d {{.data_file}} -m raido -p {{.param_file}} -o {{.output_dir}} -r 10 -s 0 -t POSE2 -c {{.comm_file}}
+      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" build/experiments/run-trial -d {{.data_file}} -m raido -p {{.param_file}} -o {{.output_dir}} -r 10 -s 0 -t POSE2 -c {{.comm_file}}
     vars:
-      LD_LIBRARY_PATH: /workspaces/src/g2o/install/lib:/workspaces/src/ORB_SLAM3/Thirdparty/DBoW2/lib:/usr/local/lib
-      comm_file: /workspaces/src/imesa-experiments/experiments/config/communication_models/pairwise.json
       data_file: /workspaces/src/imesa-experiments/data/2d_5robots_0000.jrl
       output_dir: /workspaces/src/imesa-experiments/outputs
       param_file: /workspaces/src/raido_imesa_experiments/config/raido.json
@@ -45,4 +47,40 @@ tasks:
       - experiments/scripts/plot-mean-residual -d {{.data_file}} -r {{.output_dir}}
     vars:
       data_file: /workspaces/src/imesa-experiments/data/2d_5robots_0000.jrl
-      output_dir: /workspaces/src/imesa-experiments/outputs/2d_5robots_0000_RaiDO_2024-08-20_14-17-12
+      output_dir: /workspaces/src/imesa-experiments/outputs/2d_5robots_0000_RaiDO_2024-08-21_11-30-25
+
+  run-all:
+    cmds:
+      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 1 -c {{.comm_file}}
+    vars:
+      iv: >-
+        2d_5r
+        2d_10r
+      methods: >-
+        independent
+      config_dir: /workspaces/src/imesa-experiments/experiments/config/methods
+      method_configs: >-
+        /workspaces/src/raido_imesa_experiments/config/raido.json
+        {{.config_dir}}/independent.json
+        {{.config_dir}}/independent.json
+        {{.config_dir}}/imesa.json
+        {{.config_dir}}/ddfsam2.json
+
+  summarize-experiment:
+    cmds:
+      - experiments/scripts/summarize-experiment -n {{.experiment_name}} -d {{.dataset_dir}} -r {{.result_dir}} -iv {{.iv}} -ivl {{.ivl}} -m {{.all_methods}} -x {{.xlabel}}
+    vars:
+      experiment_name: 2d_nr
+      dataset_dir: "{{.experiment_dir}}/datasets"
+      result_dir: "{{.experiment_dir}}/results"
+      iv: >-
+        2d_5r
+        2d_10r
+      ivl: >-
+        5Robot2D
+        10Robots2D
+      all_methods: >-
+        raido
+        centralized
+      xlabel: "todo"
+

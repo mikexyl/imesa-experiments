@@ -39,7 +39,7 @@ METHOD_STYLE_SHEET = {
         "symbol": "*",
         "linestyle": "solid",
     },
-    "RaiDO": {
+    "raido": {
         "name": "RaiDO",
         "color": SNS_ORANGE,
         "symbol": "+",

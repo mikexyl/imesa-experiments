@@ -47,9 +47,9 @@ def aggregate_results(
 
             for method in all_methods:
                 method_result_dir = os.path.join(result_dir, iv, method)
-                print(os.path.join(method_result_dir, "{}*/".format(dataset.name())))
+                print(os.path.join(method_result_dir, "aligned/{}*/".format(dataset.name())))
                 method_dataset_result_dir = glob.glob(
-                    os.path.join(method_result_dir, "{}*/".format(dataset.name()))
+                    os.path.join(method_result_dir, "aligned/{}*/".format(dataset.name()))
                 )[0]
 
                 aggregate_metrics(
@@ -162,6 +162,7 @@ def summarize_experiment(
 
     if legend:
         ax[0, num_iv - 1].legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    print(independent_variable_labels)
     for j in range(num_iv):
         ax[1, j].set_xticklabels([independent_variable_labels[j]], minor=True)
 
