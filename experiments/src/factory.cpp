@@ -45,7 +45,8 @@ std::shared_ptr<IncrementalSAMAgent> agent_factory(const RobotId& rid, const std
   // RaiDO
   /*********************************************************************************************************************/
   else if (method_name == raido::RaiDOAgent::METHOD_NAME) {
-    raido::RaiDOAgent::Params params;
+    auto params = raido::RaiDOAgent::Params::fromJSON(method_param_file);
+    params.root_id = rid - 'a';
     return std::make_shared<raido::RaiDOAgent>(params);
   }
   // Default

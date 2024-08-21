@@ -38,7 +38,7 @@ tasks:
       comm_file: /workspaces/src/imesa-experiments/experiments/config/communication_models/pairwise.json
       data_file: /workspaces/src/imesa-experiments/data/2d_5robots_0000.jrl
       output_dir: /workspaces/src/imesa-experiments/outputs
-      param_file: /workspaces/src/raido_imesa_experiments/config/radio.json
+      param_file: /workspaces/src/raido_imesa_experiments/config/raido.json
 
   plot-mean-residuals:
     cmds:
