@@ -30,15 +30,24 @@ tasks:
     cmds:
       - build/experiments/run-trial
 
-  make-multi-robot-dataset-2d:
+  generate-2d:
     cmds:
-      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/2d -n {{.nr}}robots -nr {{.nr}} -r {{.r}}
+      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/datasets/2d_5r -n 2d -nr 5 -r {{.r}} --xlims -50 50 --ylims -50 50
+      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/datasets/2d_10r -n 2d -nr 10 -r {{.r}} --xlims -50 50 --ylims -50 50
+  
+  generate-2d-noise:
+    cmds:
+      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/datasets/2d_10r_noised_origin -n 2d -nr 10 -r {{.r}} --xlims -50 50 --ylims -50 50 --noised_zeros 1
+
+  generate-2d-random:
+    cmds:
+      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/datasets/2d_10r_random_origin -n 2d -nr 10 -r {{.r}} --xlims -50 50 --ylims -50 50 --noised_zeros 2
 
   run-raido:
     cmds:
       - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" build/experiments/run-trial -d {{.data_file}} -m raido -p {{.param_file}} -o {{.output_dir}} -r 10 -s 0 -t POSE2 -c {{.comm_file}}
     vars:
-      data_file: /workspaces/src/imesa-experiments/data/2d_5robots_0000.jrl
+      data_file: /workspaces/src/imesa-experiments/data/datasets/2d_10r_noised_origin/2d_0000.jrl
       output_dir: /workspaces/src/imesa-experiments/outputs
       param_file: /workspaces/src/raido_imesa_experiments/config/raido.json
 
@@ -51,13 +60,16 @@ tasks:
 
   run-all:
     cmds:
-      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 1 -c {{.comm_file}}
+      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 8 -c {{.comm_file}}
     vars:
       iv: >-
-        2d_5r
-        2d_10r
+        2d_10r_random_origin
       methods: >-
+        raido
+        centralized
         independent
+        imesa
+        ddfsam2
       config_dir: /workspaces/src/imesa-experiments/experiments/config/methods
       method_configs: >-
         /workspaces/src/raido_imesa_experiments/config/raido.json
@@ -70,17 +82,24 @@ tasks:
     cmds:
       - experiments/scripts/summarize-experiment -n {{.experiment_name}} -d {{.dataset_dir}} -r {{.result_dir}} -iv {{.iv}} -ivl {{.ivl}} -m {{.all_methods}} -x {{.xlabel}}
     vars:
-      experiment_name: 2d_nr
+      experiment_name: 2D
       dataset_dir: "{{.experiment_dir}}/datasets"
       result_dir: "{{.experiment_dir}}/results"
       iv: >-
         2d_5r
         2d_10r
+        2d_10r_noised_origin
+        2d_10r_random_origin
       ivl: >-
         5Robot2D
         10Robots2D
+        10Robots2DNoisedOrigin
+        10Robots2DRandomOrigin
       all_methods: >-
         raido
         centralized
+        independent
+        imesa
+        ddfsam2
       xlabel: "todo"
 

@@ -183,6 +183,13 @@ def handle_args():
         help="X Dimension Limits",
     )
 
+    parser.add_argument(
+        "--noised_zeros",
+        type=int,
+        default=False,
+        help="Whether to add noise to the zero pose, 0: gt origin, 1: noisy origin, 2: random origin",
+    )
+
     return parser.parse_args()
 
 
@@ -222,7 +229,8 @@ def get_available_comms(vals, robots, pose_index, dist_thresh):
     random.shuffle(search)
     for rid in search:
         if rid in avaliable:
-            other_rid = get_comm_robot(vals, avaliable, rid, pose_index, dist_thresh)
+            other_rid = get_comm_robot(
+                vals, avaliable, rid, pose_index, dist_thresh)
             if other_rid:
                 comms.append((rid, other_rid))
                 avaliable.remove(rid)
@@ -244,7 +252,8 @@ def add_priors(
         fg = gtsam.NonlinearFactorGraph()
         if args.odom_type == "contworld":
             start_y = [-10, -5, 0, 5, 10]
-            init_pose = gtsam.Pose2(0, start_y[i] / 5, 0)  # np.random.uniform(0, 0.1))
+            # np.random.uniform(0, 0.1))
+            init_pose = gtsam.Pose2(0, start_y[i] / 5, 0)
         else:
             init_pose = gtsam.Pose2(
                 np.random.uniform(args.xlims[0] * 0.8, args.xlims[1] * 0.8),
@@ -253,18 +262,32 @@ def add_priors(
             )
 
         noise_sigmas = copy(args.prior_noise_sigmas)
+        noised_init = copy(init_pose)
         if i == 0:
             noise_sigmas = copy(args.robot_zero_prior_noise_sigmas)
+            if (args.noised_zeros == 1):
+                noised_init = gtsam.Pose2(
+                    init_pose.x() +
+                    np.random.normal(noise_sigmas[0]/2, noise_sigmas[0]),
+                    init_pose.y() +
+                    np.random.normal(noise_sigmas[1]/2, noise_sigmas[1]),
+                    init_pose.theta() + np.random.normal(noise_sigmas[2]/2, noise_sigmas[2]))
+            elif(args.noised_zeros==2):
+                noised_init = gtsam.Pose2(
+                    np.random.uniform(args.xlims[0] * 0.8, args.xlims[1] * 0.8),
+                    np.random.uniform(args.ylims[0] * 0.8, args.ylims[1] * 0.8),
+                    np.random.choice([0, np.pi / 2, np.pi, -np.pi / 2]),
+                )
         # Convert theta element to radians
         noise_sigmas[2] = np.deg2rad(noise_sigmas[2])
 
         fg.addPriorPose2(
             key,
-            init_pose,
+            noised_init,
             gtsam.noiseModel.Isotropic.Sigmas(noise_sigmas),
         )
         vals = gtsam.Values()
-        vals.insert(key, init_pose)
+        vals.insert(key, noised_init)
 
         builder.addEntry(
             rid,
@@ -308,7 +331,8 @@ def add_odom_step(
     gt_pose = prev_gt_poses.atPose2(prev_key).compose(odom)
     est_pose = prev_est_poses.atPose2(prev_key).compose(measure)
 
-    graphs[rid].add(gtsam.BetweenFactorPose2(prev_key, key, measure, odom_noise_model))
+    graphs[rid].add(gtsam.BetweenFactorPose2(
+        prev_key, key, measure, odom_noise_model))
     factor_types[rid].append(jrl.BetweenFactorPose2Tag)
 
     new_est_vals[rid].insert(key, est_pose)
@@ -331,14 +355,16 @@ def add_odom_step(
 
 def make_intra_loop_entry(vals, k1, k2, odom_noise_model, gen_noise):
     noise = gen_noise()
-    measure = vals.atPose2(k1).inverse().compose(vals.atPose2(k2)).compose(noise)
+    measure = vals.atPose2(k1).inverse().compose(
+        vals.atPose2(k2)).compose(noise)
     return gtsam.BetweenFactorPose2(k1, k2, measure, odom_noise_model)
 
 
 def make_loop_entry(vals, k1, k2, noise_model, gen_noise, measure_type):
     noise = gen_noise()
     if measure_type == "pose":
-        measure = vals.atPose2(k1).inverse().compose(vals.atPose2(k2)).compose(noise)
+        measure = vals.atPose2(k1).inverse().compose(
+            vals.atPose2(k2)).compose(noise)
         return gtsam.BetweenFactorPose2(k1, k2, measure, noise_model)
     elif measure_type == "range":
         rel_pose = vals.atPose2(k1).inverse().compose(vals.atPose2(k2))
@@ -454,7 +480,8 @@ def make_dataset(args, dataset_count):
         robots.append(ascii_letters[i])
 
     # Setup the Dataset Builder
-    builder = jrl.DatasetBuilder(args.name + "_{:04d}".format(dataset_count), robots)
+    builder = jrl.DatasetBuilder(
+        args.name + "_{:04d}".format(dataset_count), robots)
 
     # Setup the noise Models
     odom_noise_model = gtsam.noiseModel.Diagonal.Sigmas(
@@ -491,7 +518,8 @@ def make_dataset(args, dataset_count):
         return gtsam.Pose2(
             np.random.normal(0, args.initialization_noise_sigmas[0]),
             np.random.normal(0, args.initialization_noise_sigmas[1]),
-            np.random.normal(0, np.deg2rad(args.initialization_noise_sigmas[2])),
+            np.random.normal(0, np.deg2rad(
+                args.initialization_noise_sigmas[2])),
         )
 
     if args.comm_loop_measurement_type == "pose":
@@ -508,7 +536,8 @@ def make_dataset(args, dataset_count):
         )
     elif args.comm_loop_measurement_type == "bearing_range":
         comm_loop_noise_model = gtsam.noiseModel.Diagonal.Sigmas(
-            [np.deg2rad(args.comm_loop_noise_sigmas[0]), args.comm_loop_noise_sigmas[1]]
+            [np.deg2rad(args.comm_loop_noise_sigmas[0]),
+             args.comm_loop_noise_sigmas[1]]
         )
     else:
         raise RuntimeError("Invalid comm_loop_measurement_type provided")
@@ -518,14 +547,16 @@ def make_dataset(args, dataset_count):
             return gtsam.Pose2(
                 np.random.normal(0, args.comm_loop_noise_sigmas[0]),
                 np.random.normal(0, args.comm_loop_noise_sigmas[1]),
-                np.random.normal(0, np.deg2rad(args.comm_loop_noise_sigmas[2])),
+                np.random.normal(0, np.deg2rad(
+                    args.comm_loop_noise_sigmas[2])),
             )
         elif args.comm_loop_measurement_type == "range":
             return np.random.normal(0, args.comm_loop_noise_sigmas[0])
         elif args.comm_loop_measurement_type == "bearing_range":
             return np.array(
                 [
-                    np.random.normal(0, np.deg2rad(args.comm_loop_noise_sigmas[0])),
+                    np.random.normal(0, np.deg2rad(
+                        args.comm_loop_noise_sigmas[0])),
                     np.random.normal(0, args.comm_loop_noise_sigmas[1]),
                 ]
             )
@@ -551,7 +582,8 @@ def make_dataset(args, dataset_count):
         elif args.odom_type == "contworld":
             return ODOM_OPTIONS_CONTINUOUS[i]
         else:
-            raise RuntimeError("Invalid Odometry Type: {}".format(args.odom_type))
+            raise RuntimeError(
+                "Invalid Odometry Type: {}".format(args.odom_type))
 
     stamp = 0
     gtvals = gtsam.Values()
@@ -562,7 +594,6 @@ def make_dataset(args, dataset_count):
     )
     for pose_num in range(1, args.number_poses):
         stamp += 1
-
 
         graphs = {}
         factor_types = {}
@@ -646,7 +677,8 @@ def make_dataset(args, dataset_count):
     writer = jrl.Writer()
     writer.writeDataset(
         dataset,
-        os.path.join(args.output_dir, args.name + "_{:04d}.jrl".format(dataset_count)),
+        os.path.join(args.output_dir, args.name +
+                     "_{:04d}.jrl".format(dataset_count)),
         False,
     )
 
