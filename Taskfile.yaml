@@ -37,7 +37,7 @@ tasks:
   
   generate-2d-noise:
     cmds:
-      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/datasets/2d_10r_noised_origin -n 2d -nr 10 -r {{.r}} --xlims -50 50 --ylims -50 50 --noised_zeros 1
+      - experiments/scripts/make-multi-robot-dataset-2d -o /workspaces/src/imesa-experiments/data/datasets/2d_10r_{{.noise}} -n 2d -nr 10 -r {{.r}} --xlims -50 50 --ylims -50 50 --noised_zeros 1 --robot_zero_prior_noise_sigmas {{.noise}} {{.noise}} 1
 
   generate-2d-random:
     cmds:
@@ -47,7 +47,7 @@ tasks:
     cmds:
       - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" build/experiments/run-trial -d {{.data_file}} -m raido -p {{.param_file}} -o {{.output_dir}} -r 10 -s 0 -t POSE2 -c {{.comm_file}}
     vars:
-      data_file: /workspaces/src/imesa-experiments/data/datasets/2d_10r_noised_origin/2d_0000.jrl
+      data_file: /workspaces/src/imesa-experiments/data/datasets/2d_10r/2d_0000.jrl
       output_dir: /workspaces/src/imesa-experiments/outputs
       param_file: /workspaces/src/raido_imesa_experiments/config/raido.json
 
@@ -60,10 +60,10 @@ tasks:
 
   run-all:
     cmds:
-      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 8 -c {{.comm_file}}
+      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 16 -c {{.comm_file}}
     vars:
       iv: >-
-        2d_10r_random_origin
+        2d_5r_zero_prior
       methods: >-
         raido
         centralized
@@ -80,26 +80,24 @@ tasks:
 
   summarize-experiment:
     cmds:
-      - experiments/scripts/summarize-experiment -n {{.experiment_name}} -d {{.dataset_dir}} -r {{.result_dir}} -iv {{.iv}} -ivl {{.ivl}} -m {{.all_methods}} -x {{.xlabel}}
+      - experiments/scripts/summarize-experiment -l -n {{.experiment_name}} -d {{.dataset_dir}} -r {{.result_dir}} -iv {{.iv}} -ivl {{.ivl}} -m {{.all_methods}} -x {{.xlabel}}
     vars:
       experiment_name: 2D
       dataset_dir: "{{.experiment_dir}}/datasets"
       result_dir: "{{.experiment_dir}}/results"
       iv: >-
-        2d_5r
         2d_10r
-        2d_10r_noised_origin
-        2d_10r_random_origin
+        2d_5r_zero_prior
+        2d_5r_noised_prior
       ivl: >-
-        5Robot2D
-        10Robots2D
-        10Robots2DNoisedOrigin
-        10Robots2DRandomOrigin
+        "10 Robots"
+        "Zero Prior"
+        "Noised Prior"
       all_methods: >-
         raido
         centralized
         independent
         imesa
-        ddfsam2
-      xlabel: "todo"
+        ddfsam2 
+      xlabel: "methods"
 

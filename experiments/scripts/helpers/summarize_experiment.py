@@ -10,11 +10,11 @@ import numpy as np
 from helpers.method_style_sheet import METHOD_STYLE_SHEET
 from helpers.metrics import aggregate_metrics
 from helpers.plot_summaries import boxplot, finish_boxplot_axes, plot_boxplot_symbol
+import yaml
 
-plt.rcParams["font.family"] = "Times New Roman"
+plt.rcParams['font.family'] = "Liberation Serif"
 plt.rcParams["mathtext.fontset"] = "cm"
 plt.rcParams["pdf.fonttype"] = 42
-
 import codecs
 
 
@@ -82,6 +82,11 @@ def summarize_experiment(
     else:
         with open(pkl_file, "rb") as pickle_file:
             aggregated_results = pickle.load(pickle_file)
+    
+    # save aggregated_results to an yaml
+    yaml_file = os.path.join(result_dir, "metric_summary.yaml")
+    with open(yaml_file, "w") as yaml_file:
+        yaml.dump(aggregated_results, yaml_file, default_flow_style=False)
 
     # Lets setup the figure
     num_iv = len(independent_variables)
@@ -96,7 +101,6 @@ def summarize_experiment(
 
     for j, iv in enumerate(independent_variables):
         for i, method in enumerate(all_methods):
-        
             boxplot(
                 aggregated_results[iv][method]["iate_trans"],
                 ax[0, j],
@@ -107,6 +111,7 @@ def summarize_experiment(
                 linestyle=METHOD_STYLE_SHEET[method]["linestyle"],
                 width=0.14,
             )
+            print(method,len(aggregated_results[iv][method]["iate_trans"]))
             boxplot(
                 aggregated_results[iv][method]["iate_rot"],
                 ax[1, j],
@@ -117,18 +122,16 @@ def summarize_experiment(
                 linestyle=METHOD_STYLE_SHEET[method]["linestyle"],
                 width=0.14,
             )
-            """
-            boxplot(
-                aggregated_results[iv][method]["average_total_runtime"],
-                ax[2, j],
-                0,
-                i,
-                len(all_methods),
-                METHOD_STYLE_SHEET[method]["color"],
-                linestyle=METHOD_STYLE_SHEET[method]["linestyle"],
-                width=0.15,
-            )
-            """
+            # boxplot(
+            #     aggregated_results[iv][method]["average_total_runtime"],
+            #     ax[2, j],
+            #     0,
+            #     i,
+            #     len(all_methods),
+            #     METHOD_STYLE_SHEET[method]["color"],
+            #     linestyle=METHOD_STYLE_SHEET[method]["linestyle"],
+            #     width=0.15,
+            # )
 
     for j in range(num_iv):
         finish_boxplot_axes(ax[0, j], [independent_variables[j]])

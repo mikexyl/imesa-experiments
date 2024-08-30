@@ -162,19 +162,6 @@ def main():
                         args.type,
                     ),
                 )
-                pool.apply_async(
-                    noalign_worker,
-                    args=(
-                        idv_dataset_file,
-                        method,
-                        os.path.join(indep_var_results_dir, method, "no_align"),
-                        args.rate,
-                        args.seed,
-                        method_config,
-                        args.comm_config,
-                        args.type,
-                    ),
-                )
     pool.close()
     pool.join()
 

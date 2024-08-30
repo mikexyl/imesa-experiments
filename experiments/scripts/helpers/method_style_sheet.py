@@ -15,7 +15,7 @@ SNS_LIGHT_BLUE = "#56b4e9"
 
 METHOD_STYLE_SHEET = {
     "centralized": {
-        "name": "Centralized (iSAM2)",
+        "name": "Centralized",
         "color": SNS_GREY,
         "symbol": "o",
         "linestyle": "solid",
@@ -42,7 +42,13 @@ METHOD_STYLE_SHEET = {
     "raido": {
         "name": "RaiDO",
         "color": SNS_ORANGE,
-        "symbol": "+",
+        "symbol": "s",
+        "linestyle": "solid",
+    },
+    "raido_kn": {
+        "name": "RaiDOInit",
+        "color": SNS_RED,
+        "symbol": "s",
         "linestyle": "solid",
     }
 }

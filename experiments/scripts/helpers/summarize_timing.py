@@ -5,11 +5,21 @@ import pickle
 
 import jrl
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import numpy as np
 from helpers.method_style_sheet import METHOD_STYLE_SHEET
 from matplotlib.ticker import Locator
 
-plt.rcParams["font.family"] = "Times New Roman"
+import matplotlib as mpl
+mpl.font_manager._rebuild()
+
+# Specify the exact path to the Times New Roman font
+font_path = '/usr/share/fonts/truetype/Times New Roman.ttf'
+
+# Set the font family globally using FontProperties
+print(fm.FontProperties(fname=font_path).get_name())
+plt.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
+
 plt.rcParams["mathtext.fontset"] = "cm"
 plt.rcParams["pdf.fonttype"] = 42
 

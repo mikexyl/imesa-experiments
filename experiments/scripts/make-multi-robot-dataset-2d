@@ -190,6 +190,13 @@ def handle_args():
         help="Whether to add noise to the zero pose, 0: gt origin, 1: noisy origin, 2: random origin",
     )
 
+    parser.add_argument(
+        "--zeros_sigmas",
+        type=float,
+        nargs="+",
+        default=[0.01, 0.01, 1],
+    )
+
     return parser.parse_args()
 
 
@@ -265,18 +272,34 @@ def add_priors(
         noised_init = copy(init_pose)
         if i == 0:
             noise_sigmas = copy(args.robot_zero_prior_noise_sigmas)
+        else:
             if (args.noised_zeros == 1):
                 noised_init = gtsam.Pose2(
                     init_pose.x() +
-                    np.random.normal(noise_sigmas[0]/2, noise_sigmas[0]),
+                    np.random.normal(
+                        args.zeros_sigmas[0], args.zeros_sigmas[0]/4),
                     init_pose.y() +
-                    np.random.normal(noise_sigmas[1]/2, noise_sigmas[1]),
-                    init_pose.theta() + np.random.normal(noise_sigmas[2]/2, noise_sigmas[2]))
-            elif(args.noised_zeros==2):
+                    np.random.normal(
+                        args.zeros_sigmas[1], args.zeros_sigmas[1]/4),
+                    init_pose.theta() + np.random.normal(args.zeros_sigmas[2], args.zeros_sigmas[2]/4))
+            elif (args.noised_zeros == 2):
                 noised_init = gtsam.Pose2(
-                    np.random.uniform(args.xlims[0] * 0.8, args.xlims[1] * 0.8),
-                    np.random.uniform(args.ylims[0] * 0.8, args.ylims[1] * 0.8),
+                    np.random.uniform(
+                        args.xlims[0] * 0.8, args.xlims[1] * 0.8),
+                    np.random.uniform(
+                        args.ylims[0] * 0.8, args.ylims[1] * 0.8),
                     np.random.choice([0, np.pi / 2, np.pi, -np.pi / 2]),
+                )
+            elif args.noised_zeros == 4:
+                noised_init = gtsam.Pose2(0, 0, 0)
+            elif args.noised_zeros == 3:
+                noised_init = gtsam.Pose2(
+                    init_pose.x() + np.random.normal(0,
+                                                     args.prior_noise_sigmas[0]),
+                    init_pose.y() + np.random.normal(0,
+                                                     args.prior_noise_sigmas[1]),
+                    init_pose.theta() + np.random.normal(0,
+                                                         args.prior_noise_sigmas[2]),
                 )
         # Convert theta element to radians
         noise_sigmas[2] = np.deg2rad(noise_sigmas[2])
