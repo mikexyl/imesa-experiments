@@ -7,6 +7,17 @@ import pickle as pkl
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt.rcParams["font.family"] = "Liberation Serif"
+plt.rcParams["mathtext.fontset"] = "cm"
+plt.rcParams["pdf.fonttype"] = 42
+# set font size
+plt.rcParams.update({"font.size": 18})
+figsize = (8, 5)  # Adjust the width (10) and height (6)
+markerscale = 1.5  # Adjust the size of the markers in the legend
+scattersize = 80
+boxanchors = (0.5, -0.15)  # Adjust the position of the legend
+
+
 SNS_BLUE = "#0173b2"
 SNS_ORANGE = "#de8f05"
 SNS_GREEN = "#029e73"
@@ -59,6 +70,35 @@ METHOD_STYLE_SHEET = {
 }
 
 
+def get_valid_data(data, status, repeat):
+    # take any of every repeat statuses
+    run_status = [any(status[i:i+repeat])
+                  for i in range(0, len(status), repeat)]
+    run_status = np.array(run_status)
+    mean_data = np.array(len(status) * [0.0]).flatten()
+    mean_data[status == True] = data
+    mean_data[status == False] = np.nan
+
+    valid_mean = np.array(len(run_status)*[0.0])
+    for i in range(0, len(run_status)):
+        if run_status[i] == True:
+            total = 0
+            n = 0
+            for j in range(0, repeat):
+                if status[i*repeat+j] == True:
+                    total += mean_data[i*repeat+j]
+                    n += 1
+            valid_mean[i] = total/n
+
+    x = range(len(run_status))
+
+    valid_x = np.array([x[i] for i in range(
+        0, len(run_status)) if run_status[i] == True])
+    valid_mean = valid_mean[valid_mean > 0]
+
+    return valid_x, valid_mean, run_status
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -68,11 +108,9 @@ def main():
         default="/workspaces/src/imesa-experiments/data/results/metric_summary.pkl",
     )
     args = parser.parse_args()
-
     # Create a scatter plot with Seaborn
-    sns.set(style="whitegrid")  # Set the style of the plot
+    # sns.set(style="whitegrid")  # Set the style of the plot
 
-    print(args.input)
     # load the yaml file
     aggregated_results = None
     with open(args.input, "rb") as pickle_file:
@@ -80,118 +118,248 @@ def main():
 
     iv = "2d_5r_noised_prior"
 
-    for method in aggregated_results[iv]:
-        print(method)
-        data = aggregated_results[iv][method]["iate_trans"]
-        # average every 3 values
-        data = [sum(data[i : i + 3]) / 3 for i in range(0, len(data), 3)]
+    n_data = 0
 
-        n = len(data)
-        print(n)
-        x = range(n)
-        x = np.array(x)+5
+    method_list = ["raido", "imesa", "ddfsam2", "independent", "centralized"]
+    methods_reverse = method_list
+    methods_reverse.reverse()
+
+    fig_noise = plt.figure(figsize=figsize)
+
+    last_value = {}
+    first_value = {}
+    all_success = {}
+    repeat = 3
+    for method in methods_reverse:
+        if method not in aggregated_results[iv]:
+            continue
+        data = aggregated_results[iv][method]["iate_trans"]
+        status = aggregated_results[iv][method]["statuses"]
+        status = np.array(status)
+
+        valid_x, valid_mean, run_status = get_valid_data(data, status, repeat)
+        
+        n_data=len(run_status)
 
         # set line alpha to 0.5 dashed lines
-        sns.lineplot(
-            x=x,
-            y=data,
-            alpha=0.7,
-            color=METHOD_STYLE_SHEET[method]["color"],
-            linestyle="solid",
-        )
+        if all(run_status):
+            all_success[method] = True
+            sns.lineplot(
+                x=valid_x,
+                y=valid_mean,
+                alpha=0.7,
+                color=METHOD_STYLE_SHEET[method]["color"],
+                linestyle="solid",
+            )
         sns.scatterplot(
-            x=x,
-            y=data,
+            x=valid_x,
+            y=valid_mean,
             label=METHOD_STYLE_SHEET[method]["name"],
             marker=METHOD_STYLE_SHEET[method]["symbol"],
             color=METHOD_STYLE_SHEET[method]["color"],
-            s=50,
+            s=scattersize,
         )
 
+        last_value[method] = valid_mean[-1]
+        if method not in first_value:
+            first_value[method] = valid_mean[0]
+
+    has_nr = "2d_nr" in aggregated_results
+
+    iv = "2d_5r_zero_prior"
+    for method in methods_reverse:
+        if method not in aggregated_results[iv]:
+            continue
+        data = aggregated_results[iv][method]["iate_trans"]
+        if len(data) == 0:
+            continue
+        data = [sum(data) / len(data)]
+        x = 1+ n_data
+        sns.scatterplot(
+            x=[x],
+            y=data,
+            marker=METHOD_STYLE_SHEET[method]["symbol"],
+            color=METHOD_STYLE_SHEET[method]["color"],
+            s=scattersize,
+        )
+        if method in all_success and all_success[method]:
+            plt.plot(
+                [n_data-1, x],
+                [last_value[method], data[0]],
+                alpha=1.0,
+                color=METHOD_STYLE_SHEET[method]["color"],
+                linestyle="--",
+            )
+
+    iv = "2d_5r_gt_prior"
+    for method in methods_reverse:
+        if method not in aggregated_results[iv]:
+            continue
+        data = aggregated_results[iv][method]["iate_trans"]
+        if len(data) == 0:
+            continue
+        # take the average of all the values
+        data = [sum(data) / len(data)]
+        x = -2
+        sns.scatterplot(
+            x=[x],
+            y=data,
+            marker=METHOD_STYLE_SHEET[method]["symbol"],
+            color=METHOD_STYLE_SHEET[method]["color"],
+            s=scattersize,
+        )
+        if method in all_success and all_success[method]:
+            plt.plot(
+                [-2, 0],
+                [data[0], first_value[method]],
+                alpha=1.0,
+                color=METHOD_STYLE_SHEET[method]["color"],
+                linestyle="--",
+            )
+
     # Add title and labels
-    plt.title("iATE vs. Noise of initialization.")
+    # plt.title("iATE vs. Noise of initialization.")
+    # Set x-axis limits to create a separation
+    plt.xlim(-2.5, n_data + 1.5)
+
+    # Customize x-axis labels to create a gap and label the isolated column as "inf"
+    plt.xticks(
+        list(range(-2, n_data)) + [n_data, n_data + 1],
+        ["GT", ""] + list(range(1, n_data+1)) + ["", "  None"],
+    )
+
+    # plt.xticks(list(range(n_data+2)), list(range(n_data+1)) + ['inf'])
     plt.xlabel("Noise of initialization (m)")
-    plt.ylabel("iATE")
+    plt.ylabel("iATE(Translation)")
+    # Extract handles and labels from the original legend
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    # Reverse the order of handles and labels
+    handles.reverse()
+    labels.reverse()
     plt.legend(
-        markerscale=1.5,
-        handletextpad=0.5,
+        handles,
+        labels,
+        markerscale=markerscale,
+        handletextpad=0.0,
         fontsize="medium",
         loc="upper center",
         # Adjusted the vertical position further down
-        bbox_to_anchor=(0.5, -0.2),
-        ncol=3,
+        bbox_to_anchor=boxanchors,
+        ncol=5,
         frameon=False,  # Draw a frame around the legend
-        borderpad=0.3,  # Padding inside the legend box
-        labelspacing=0.5,  # Vertical space between legend entries
-        handlelength=2,  # Length of the legend markers
-        handleheight=2,  # Height of the legend markers
-        borderaxespad=0.5,  # Padding between the axes and the legend box
+        borderpad=0.1,  # Padding inside the legend box
+        labelspacing=0.1,  # Vertical space between legend entries
+        handlelength=1,  # Length of the legend markers
+        handleheight=1,  # Height of the legend markers
+        borderaxespad=1.0,  # Padding between the axes and the legend box
         columnspacing=0.5,  # Space between the columns
     )
-    plt.subplots_adjust(bottom=0.3)  # Add space at the bottom of the figure
+    plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
+
+    # Disable the grid lines entirely
+    plt.grid(False)
+
+    # Manually add grid lines except for the gap
+    for i in range(0, n_data):
+        plt.axvline(x=i, color="lightgrey", linestyle="--",
+                    linewidth=0.7, zorder=0)
+
+    # Add a grid line for the "inf" column if desired
+    plt.axvline(
+        x=n_data + 1, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0
+    )
+
+    plt.axvline(x=-2, color="lightgrey",
+                linestyle="--", linewidth=0.7, zorder=0)
+
+    for i in range(2, 10, 2):
+        plt.axhline(y=i, color="lightgrey", linestyle="--",
+                    linewidth=0.7, zorder=0)
+
+    # set font to serif
 
     # save svg
     plt.savefig("iate_noise.svg")
+    plt.savefig("iate_noise.pdf")
 
-    has_nr = "2d_nr_noised" not in aggregated_results
+    handles, labels = plt.gca().get_legend_handles_labels()
 
     # Show the plot
-    plt.show(block=~has_nr)
+    plt.show(block=False)
 
-    fig_nr = plt.figure()
+    fig_nr = plt.figure(figsize=figsize)
+    plt.grid(True, linestyle="--", zorder=0)
 
     if not has_nr:
         return
 
-    for method in aggregated_results["2d_nr_noised"]:
-        data = aggregated_results["2d_nr_noised"][method]["iate_trans"]
-        # average every 3 values
-        n = len(data)
-        print(n)
-        x = range(n)
-        x = np.array(x)+2
+    repeat = 3
+    nr_range=range(2, 21, 2)
+    for method in method_list:
+        data = aggregated_results["2d_nr"][method]["iate_trans"]
+        if len(data) == 0:
+            continue
+        status = aggregated_results["2d_nr"][method]["statuses"]
+        # take all of every repeat statuses
+        status = np.array(status)
+
+        valid_x, valid_mean, run_status = get_valid_data(data, status, repeat)
+
+        valid_x = valid_x*2+2
 
         # set line alpha to 0.5 dashed lines
         sns.lineplot(
-            x=x,
-            y=data,
+            x=valid_x,
+            y=valid_mean / valid_x,
             alpha=0.7,
             color=METHOD_STYLE_SHEET[method]["color"],
             linestyle="solid",
         )
         sns.scatterplot(
-            x=x,
-            y=data,
+            x=valid_x,
+            y=valid_mean / valid_x,
             label=METHOD_STYLE_SHEET[method]["name"],
             marker=METHOD_STYLE_SHEET[method]["symbol"],
             color=METHOD_STYLE_SHEET[method]["color"],
-            s=60,
+            s=scattersize,
         )
 
     # Add title and labels
-    plt.title("iATE vs. Number of robots.")
-    plt.xlabel("Noise of initialization (m)")
-    plt.ylabel("iATE(trans)")
+    # plt.title("iATE vs. Number of robots.")
+    plt.xticks(nr_range, nr_range)
+    # Extract handles and labels from the original legend
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    # Reverse the order of handles and labels
+    handles.reverse()
+    labels.reverse()
     plt.legend(
-        markerscale=1,
-        handletextpad=0.5,
+        handles,
+        labels,
+        markerscale=markerscale,
+        handletextpad=0.0,
         fontsize="medium",
         loc="upper center",
         # Adjusted the vertical position further down
-        bbox_to_anchor=(0.5, -0.2),
-        ncol=3,
+        bbox_to_anchor=boxanchors,
+        ncol=5,
         frameon=False,  # Draw a frame around the legend
-        borderpad=0.3,  # Padding inside the legend box
-        labelspacing=0.5,  # Vertical space between legend entries
-        handlelength=2,  # Length of the legend markers
-        handleheight=2,  # Height of the legend markers
-        borderaxespad=0.5,  # Padding between the axes and the legend box
+        borderpad=0.1,  # Padding inside the legend box
+        labelspacing=0.1,  # Vertical space between legend entries
+        handlelength=1,  # Length of the legend markers
+        handleheight=1,  # Height of the legend markers
+        borderaxespad=1.0,  # Padding between the axes and the legend box
         columnspacing=0.5,  # Space between the columns
     )
-    plt.subplots_adjust(bottom=0.3)  # Add space at the bottom of the figure
+    plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
+
+    plt.xlabel("Number of robots")
+    plt.ylabel("iATE(Translation)")
 
     # save svg
     plt.savefig("iate_nr.svg")
+    plt.savefig("iate_nr.pdf")
 
     # Show the plot
     plt.show(block=True)

@@ -60,10 +60,10 @@ tasks:
 
   run-all:
     cmds:
-      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 16 -c {{.comm_file}}
+      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 8 -c {{.comm_file}}
     vars:
       iv: >-
-        2d_5r_zero_prior
+        2d_nr
       methods: >-
         raido
         centralized
@@ -87,11 +87,15 @@ tasks:
       result_dir: "{{.experiment_dir}}/results"
       iv: >-
         2d_10r
+        2d_nr
         2d_5r_zero_prior
+        2d_5r_gt_prior
         2d_5r_noised_prior
       ivl: >-
         "10 Robots"
+        "nr Robots"
         "Zero Prior"
+        "Gt Prior"
         "Noised Prior"
       all_methods: >-
         raido

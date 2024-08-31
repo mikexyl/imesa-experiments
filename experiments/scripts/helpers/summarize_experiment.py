@@ -172,6 +172,24 @@ def summarize_experiment(
     fig.tight_layout(pad=0.1)
     fig.subplots_adjust(wspace=0.25, hspace=0.1)
     fig.align_labels()
+
+    print("setting legend")
+    fig.legend(
+        markerscale=1,
+        handletextpad=0.5,
+        fontsize="medium",
+        loc="upper center",
+        # Adjusted the vertical position further down
+        bbox_to_anchor=(0.5, -0.2),
+        ncol=3,
+        frameon=False,  # Draw a frame around the legend
+        borderpad=0.3,  # Padding inside the legend box
+        labelspacing=0.5,  # Vertical space between legend entries
+        handlelength=2,  # Length of the legend markers
+        handleheight=2,  # Height of the legend markers
+        borderaxespad=0.5,  # Padding between the axes and the legend box
+        columnspacing=0.5,  # Space between the columns
+    )
     if experiment_name != "":
         fig.subplots_adjust(top=0.9)
 

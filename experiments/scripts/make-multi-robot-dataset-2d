@@ -291,6 +291,7 @@ def add_priors(
                     np.random.choice([0, np.pi / 2, np.pi, -np.pi / 2]),
                 )
             elif args.noised_zeros == 4:
+                print("all zero init")
                 noised_init = gtsam.Pose2(0, 0, 0)
             elif args.noised_zeros == 3:
                 noised_init = gtsam.Pose2(
@@ -312,6 +313,9 @@ def add_priors(
         vals = gtsam.Values()
         vals.insert(key, noised_init)
 
+        gt_vals = gtsam.Values()
+        gt_vals.insert(key, init_pose)
+
         builder.addEntry(
             rid,
             stamp,
@@ -319,7 +323,7 @@ def add_priors(
             [jrl.PriorFactorPose2Tag],
             {},
             jrl.TypedValues(vals, {key: jrl.Pose2Tag}),
-            jrl.TypedValues(vals, {key: jrl.Pose2Tag}),
+            jrl.TypedValues(gt_vals, {key: jrl.Pose2Tag}),
         )
         # Update the prev_vals
         prev_gt_poses.insert(key, init_pose)
