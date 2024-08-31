@@ -36,30 +36,35 @@ METHOD_STYLE_SHEET = {
         "color": SNS_GREY,
         "symbol": "o",
         "linestyle": "solid",
+        "zorder": 1,
     },
     "independent": {
         "name": "Independent",
         "color": SNS_PURPLE,
         "symbol": "d",
         "linestyle": "solid",
+        "zorder": 2,
     },
     "ddfsam2": {
         "name": "DDF-SAM2",
         "color": SNS_GREEN,
         "symbol": "X",
         "linestyle": "solid",
+        "zorder": 3,
     },
     "imesa": {
         "name": "iMESA",
         "color": SNS_BLUE,
-        "symbol": "*",
+        "symbol": "h",
         "linestyle": "solid",
+        "zorder": 4,
     },
     "raido": {
         "name": "RaiDO",
         "color": SNS_ORANGE,
         "symbol": "s",
         "linestyle": "solid",
+        "zorder": 6,
     },
     "raido_kn": {
         "name": "RaiDOInit",
@@ -69,31 +74,33 @@ METHOD_STYLE_SHEET = {
     },
 }
 
+LOG_Y_SCALE = False
+
 
 def get_valid_data(data, status, repeat):
     # take any of every repeat statuses
-    run_status = [any(status[i:i+repeat])
-                  for i in range(0, len(status), repeat)]
+    run_status = [any(status[i : i + repeat]) for i in range(0, len(status), repeat)]
     run_status = np.array(run_status)
     mean_data = np.array(len(status) * [0.0]).flatten()
     mean_data[status == True] = data
     mean_data[status == False] = np.nan
 
-    valid_mean = np.array(len(run_status)*[0.0])
+    valid_mean = np.array(len(run_status) * [0.0])
     for i in range(0, len(run_status)):
         if run_status[i] == True:
             total = 0
             n = 0
             for j in range(0, repeat):
-                if status[i*repeat+j] == True:
-                    total += mean_data[i*repeat+j]
+                if status[i * repeat + j] == True:
+                    total += mean_data[i * repeat + j]
                     n += 1
-            valid_mean[i] = total/n
+            valid_mean[i] = total / n
 
     x = range(len(run_status))
 
-    valid_x = np.array([x[i] for i in range(
-        0, len(run_status)) if run_status[i] == True])
+    valid_x = np.array(
+        [x[i] for i in range(0, len(run_status)) if run_status[i] == True]
+    )
     valid_mean = valid_mean[valid_mean > 0]
 
     return valid_x, valid_mean, run_status
@@ -138,8 +145,8 @@ def main():
         status = np.array(status)
 
         valid_x, valid_mean, run_status = get_valid_data(data, status, repeat)
-        
-        n_data=len(run_status)
+
+        n_data = len(run_status)
 
         # set line alpha to 0.5 dashed lines
         if all(run_status):
@@ -150,6 +157,7 @@ def main():
                 alpha=0.7,
                 color=METHOD_STYLE_SHEET[method]["color"],
                 linestyle="solid",
+                zorder=METHOD_STYLE_SHEET[method]["zorder"],
             )
         sns.scatterplot(
             x=valid_x,
@@ -158,6 +166,7 @@ def main():
             marker=METHOD_STYLE_SHEET[method]["symbol"],
             color=METHOD_STYLE_SHEET[method]["color"],
             s=scattersize,
+            zorder=METHOD_STYLE_SHEET[method]["zorder"],
         )
 
         last_value[method] = valid_mean[-1]
@@ -174,21 +183,23 @@ def main():
         if len(data) == 0:
             continue
         data = [sum(data) / len(data)]
-        x = 1+ n_data
+        x = 0.5 + n_data
         sns.scatterplot(
             x=[x],
             y=data,
             marker=METHOD_STYLE_SHEET[method]["symbol"],
             color=METHOD_STYLE_SHEET[method]["color"],
             s=scattersize,
+            zorder=METHOD_STYLE_SHEET[method]["zorder"],
         )
         if method in all_success and all_success[method]:
             plt.plot(
-                [n_data-1, x],
+                [n_data - 1, x],
                 [last_value[method], data[0]],
                 alpha=1.0,
                 color=METHOD_STYLE_SHEET[method]["color"],
                 linestyle="--",
+                zorder=METHOD_STYLE_SHEET[method]["zorder"],
             )
 
     iv = "2d_5r_gt_prior"
@@ -200,35 +211,38 @@ def main():
             continue
         # take the average of all the values
         data = [sum(data) / len(data)]
-        x = -2
+        x = -1.5
         sns.scatterplot(
             x=[x],
             y=data,
             marker=METHOD_STYLE_SHEET[method]["symbol"],
             color=METHOD_STYLE_SHEET[method]["color"],
             s=scattersize,
+            zorder=METHOD_STYLE_SHEET[method]["zorder"],
         )
         if method in all_success and all_success[method]:
             plt.plot(
-                [-2, 0],
+                [-1.5, 0],
                 [data[0], first_value[method]],
                 alpha=1.0,
                 color=METHOD_STYLE_SHEET[method]["color"],
                 linestyle="--",
+                zorder=METHOD_STYLE_SHEET[method]["zorder"],
             )
 
     # Add title and labels
     # plt.title("iATE vs. Noise of initialization.")
     # Set x-axis limits to create a separation
-    plt.xlim(-2.5, n_data + 1.5)
+    plt.xlim(-2, n_data + 1)
 
     # Customize x-axis labels to create a gap and label the isolated column as "inf"
     plt.xticks(
-        list(range(-2, n_data)) + [n_data, n_data + 1],
-        ["GT", ""] + list(range(1, n_data+1)) + ["", "  None"],
+        [-1.5] + list(range(0, n_data)) + [n_data + 0.5],
+        ["GT"] + list(range(1, n_data + 1)) + ["  None"],
     )
 
-    # plt.xticks(list(range(n_data+2)), list(range(n_data+1)) + ['inf'])
+    plt.yscale("log" if LOG_Y_SCALE else "linear")
+
     plt.xlabel("Noise of initialization (m)")
     plt.ylabel("iATE(Translation)")
     # Extract handles and labels from the original legend
@@ -262,20 +276,17 @@ def main():
 
     # Manually add grid lines except for the gap
     for i in range(0, n_data):
-        plt.axvline(x=i, color="lightgrey", linestyle="--",
-                    linewidth=0.7, zorder=0)
+        plt.axvline(x=i, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0)
 
     # Add a grid line for the "inf" column if desired
     plt.axvline(
-        x=n_data + 1, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0
+        x=n_data + 0.5, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0
     )
 
-    plt.axvline(x=-2, color="lightgrey",
-                linestyle="--", linewidth=0.7, zorder=0)
+    plt.axvline(x=-1.5, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0)
 
     for i in range(2, 10, 2):
-        plt.axhline(y=i, color="lightgrey", linestyle="--",
-                    linewidth=0.7, zorder=0)
+        plt.axhline(y=i, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0)
 
     # set font to serif
 
@@ -295,7 +306,7 @@ def main():
         return
 
     repeat = 3
-    nr_range=range(2, 21, 2)
+    nr_range = range(2, 21, 2)
     for method in method_list:
         data = aggregated_results["2d_nr"][method]["iate_trans"]
         if len(data) == 0:
@@ -306,16 +317,19 @@ def main():
 
         valid_x, valid_mean, run_status = get_valid_data(data, status, repeat)
 
-        valid_x = valid_x*2+2
+        valid_x = valid_x * 2 + 2
+        all_success = all(run_status)
 
         # set line alpha to 0.5 dashed lines
-        sns.lineplot(
-            x=valid_x,
-            y=valid_mean / valid_x,
-            alpha=0.7,
-            color=METHOD_STYLE_SHEET[method]["color"],
-            linestyle="solid",
-        )
+        if all_success:
+            sns.lineplot(
+                x=valid_x,
+                y=valid_mean / valid_x,
+                alpha=0.7,
+                color=METHOD_STYLE_SHEET[method]["color"],
+                linestyle="solid",
+                zorder=METHOD_STYLE_SHEET[method]["zorder"],
+            )
         sns.scatterplot(
             x=valid_x,
             y=valid_mean / valid_x,
@@ -323,6 +337,7 @@ def main():
             marker=METHOD_STYLE_SHEET[method]["symbol"],
             color=METHOD_STYLE_SHEET[method]["color"],
             s=scattersize,
+            zorder=METHOD_STYLE_SHEET[method]["zorder"],
         )
 
     # Add title and labels
@@ -355,7 +370,7 @@ def main():
     plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
 
     plt.xlabel("Number of robots")
-    plt.ylabel("iATE(Translation)")
+    plt.ylabel("Mean iATE(Translation)")
 
     # save svg
     plt.savefig("iate_nr.svg")
