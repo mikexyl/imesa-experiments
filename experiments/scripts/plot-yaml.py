@@ -60,14 +60,14 @@ METHOD_STYLE_SHEET = {
         "zorder": 4,
     },
     "raido": {
-        "name": "RaiDO",
+        "name": "Ours",
         "color": SNS_ORANGE,
         "symbol": "s",
         "linestyle": "solid",
         "zorder": 6,
     },
     "raido_kn": {
-        "name": "RaiDOInit",
+        "name": "Ours",
         "color": SNS_RED,
         "symbol": "s",
         "linestyle": "solid",
@@ -76,6 +76,28 @@ METHOD_STYLE_SHEET = {
 
 LOG_Y_SCALE = False
 
+def legend():
+    handles, labels = plt.gca().get_legend_handles_labels()
+    handles.reverse()
+    labels.reverse()
+    plt.legend(
+        handles,
+        labels,
+        markerscale=markerscale,
+        handletextpad=0.0,
+        fontsize="medium",
+        loc="upper center",
+        # Adjusted the vertical position further down
+        bbox_to_anchor=boxanchors,
+        ncol=5,
+        frameon=False,  # Draw a frame around the legend
+        borderpad=0.1,  # Padding inside the legend box
+        labelspacing=0.1,  # Vertical space between legend entries
+        handlelength=1,  # Length of the legend markers
+        handleheight=1,  # Height of the legend markers
+        borderaxespad=1.0,  # Padding between the axes and the legend box
+        columnspacing=0.5,  # Space between the columns
+    )
 
 def get_valid_data(data, status, repeat):
     # take any of every repeat statuses
@@ -245,30 +267,7 @@ def main():
 
     plt.xlabel("Noise of initialization (m)")
     plt.ylabel("iATE(Translation)")
-    # Extract handles and labels from the original legend
-    handles, labels = plt.gca().get_legend_handles_labels()
-
-    # Reverse the order of handles and labels
-    handles.reverse()
-    labels.reverse()
-    plt.legend(
-        handles,
-        labels,
-        markerscale=markerscale,
-        handletextpad=0.0,
-        fontsize="medium",
-        loc="upper center",
-        # Adjusted the vertical position further down
-        bbox_to_anchor=boxanchors,
-        ncol=5,
-        frameon=False,  # Draw a frame around the legend
-        borderpad=0.1,  # Padding inside the legend box
-        labelspacing=0.1,  # Vertical space between legend entries
-        handlelength=1,  # Length of the legend markers
-        handleheight=1,  # Height of the legend markers
-        borderaxespad=1.0,  # Padding between the axes and the legend box
-        columnspacing=0.5,  # Space between the columns
-    )
+    legend()
     plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
 
     # Disable the grid lines entirely
@@ -349,24 +348,7 @@ def main():
     # Reverse the order of handles and labels
     handles.reverse()
     labels.reverse()
-    plt.legend(
-        handles,
-        labels,
-        markerscale=markerscale,
-        handletextpad=0.0,
-        fontsize="medium",
-        loc="upper center",
-        # Adjusted the vertical position further down
-        bbox_to_anchor=boxanchors,
-        ncol=5,
-        frameon=False,  # Draw a frame around the legend
-        borderpad=0.1,  # Padding inside the legend box
-        labelspacing=0.1,  # Vertical space between legend entries
-        handlelength=1,  # Length of the legend markers
-        handleheight=1,  # Height of the legend markers
-        borderaxespad=1.0,  # Padding between the axes and the legend box
-        columnspacing=0.5,  # Space between the columns
-    )
+    legend()
     plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
 
     plt.xlabel("Number of robots")
@@ -377,7 +359,57 @@ def main():
     plt.savefig("iate_nr.pdf")
 
     # Show the plot
+    plt.show(block=False)
+
+    # plot the total runtime
+    fig_runtime = plt.figure(figsize=figsize)
+    plt.grid(True, linestyle="--", zorder=0)
+
+    for method in method_list:
+        print(aggregated_results["2d_nr"][method].keys())
+        data = aggregated_results["2d_nr"][method]["average_total_runtime"]
+        if len(data) == 0:
+            continue
+        status = aggregated_results["2d_nr"][method]["statuses"]
+        # take all of every repeat statuses
+        status = np.array(status)
+
+        valid_x, valid_mean, run_status = get_valid_data(data, status, repeat)
+
+        valid_x = valid_x * 2 + 2
+        all_success = all(run_status)
+
+        # set line alpha to 0.5 dashed lines
+        if all_success:
+            sns.lineplot(
+                x=valid_x,
+                y=valid_mean,
+                alpha=0.7,
+                color=METHOD_STYLE_SHEET[method]["color"],
+                linestyle="solid",
+                zorder=METHOD_STYLE_SHEET[method]["zorder"],
+            )
+        sns.scatterplot(
+            x=valid_x,
+            y=valid_mean,
+            label=METHOD_STYLE_SHEET[method]["name"],
+            marker=METHOD_STYLE_SHEET[method]["symbol"],
+            color=METHOD_STYLE_SHEET[method]["color"],
+            s=scattersize,
+            zorder=METHOD_STYLE_SHEET[method]["zorder"],
+        )
+    
+    # Add title and labels
+    plt.xticks(nr_range, nr_range)
+    plt.yscale("log")
+    plt.title("Total runtime of different methods")
+    plt.xlabel("Number of robots")
+    plt.ylabel("Total runtime (s)")
+    legend()
+    plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
+    plt.savefig("runtime_nr.pdf")
     plt.show(block=True)
+    
 
 
 if __name__ == "__main__":
