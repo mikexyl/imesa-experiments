@@ -68,13 +68,14 @@ METHOD_STYLE_SHEET = {
     },
     "raido_kn": {
         "name": "Ours",
-        "color": SNS_RED,
+        "color": SNS_PINK,
         "symbol": "s",
         "linestyle": "solid",
+        "zorder": 6,
     },
 }
 
-LOG_Y_SCALE = False
+LOG_Y_SCALE = True
 
 def legend():
     handles, labels = plt.gca().get_legend_handles_labels()
@@ -149,7 +150,7 @@ def main():
 
     n_data = 0
 
-    method_list = ["raido", "imesa", "ddfsam2", "independent", "centralized"]
+    method_list = ["raido","imesa", "independent", "ddfsam2", "centralized"]
     methods_reverse = method_list
     methods_reverse.reverse()
 
@@ -198,75 +199,82 @@ def main():
     has_nr = "2d_nr" in aggregated_results
 
     iv = "2d_5r_zero_prior"
-    for method in methods_reverse:
-        if method not in aggregated_results[iv]:
-            continue
-        data = aggregated_results[iv][method]["iate_trans"]
-        if len(data) == 0:
-            continue
-        data = [sum(data) / len(data)]
-        x = 0.5 + n_data
-        sns.scatterplot(
-            x=[x],
-            y=data,
-            marker=METHOD_STYLE_SHEET[method]["symbol"],
-            color=METHOD_STYLE_SHEET[method]["color"],
-            s=scattersize,
-            zorder=METHOD_STYLE_SHEET[method]["zorder"],
-        )
-        if method in all_success and all_success[method]:
-            plt.plot(
-                [n_data - 1, x],
-                [last_value[method], data[0]],
-                alpha=1.0,
+    if iv in aggregated_results:
+        for method in methods_reverse:
+            if method not in aggregated_results[iv]:
+                continue
+            data = aggregated_results[iv][method]["iate_trans"]
+            if len(data) == 0:
+                continue
+            data = [sum(data) / len(data)]
+            x = 0.5 + n_data
+            sns.scatterplot(
+                x=[x],
+                y=data,
+                marker=METHOD_STYLE_SHEET[method]["symbol"],
                 color=METHOD_STYLE_SHEET[method]["color"],
-                linestyle="--",
+                s=scattersize,
                 zorder=METHOD_STYLE_SHEET[method]["zorder"],
+            )
+            if method in all_success and all_success[method]:
+                plt.plot(
+                    [n_data - 1, x],
+                    [last_value[method], data[0]],
+                    alpha=1.0,
+                    color=METHOD_STYLE_SHEET[method]["color"],
+                    linestyle="--",
+                    zorder=METHOD_STYLE_SHEET[method]["zorder"],
             )
 
     iv = "2d_5r_gt_prior"
-    for method in methods_reverse:
-        if method not in aggregated_results[iv]:
-            continue
-        data = aggregated_results[iv][method]["iate_trans"]
-        if len(data) == 0:
-            continue
-        # take the average of all the values
-        data = [sum(data) / len(data)]
-        x = -1.5
-        sns.scatterplot(
-            x=[x],
-            y=data,
-            marker=METHOD_STYLE_SHEET[method]["symbol"],
-            color=METHOD_STYLE_SHEET[method]["color"],
-            s=scattersize,
-            zorder=METHOD_STYLE_SHEET[method]["zorder"],
-        )
-        if method in all_success and all_success[method]:
-            plt.plot(
-                [-1.5, 0],
-                [data[0], first_value[method]],
-                alpha=1.0,
+    if iv in aggregated_results:
+        for method in methods_reverse:
+            if method not in aggregated_results[iv]:
+                continue
+            data = aggregated_results[iv][method]["iate_trans"]
+            if len(data) == 0:
+                continue
+            # take the average of all the values
+            data = [sum(data) / len(data)]
+            x = -1.0
+            sns.scatterplot(
+                x=[x],
+                y=data,
+                marker=METHOD_STYLE_SHEET[method]["symbol"],
                 color=METHOD_STYLE_SHEET[method]["color"],
-                linestyle="--",
+                s=scattersize,
                 zorder=METHOD_STYLE_SHEET[method]["zorder"],
             )
+            if method in all_success and all_success[method]:
+                plt.plot(
+                    [-1, 0],
+                    [data[0], first_value[method]],
+                    alpha=1.0,
+                    color=METHOD_STYLE_SHEET[method]["color"],
+                    zorder=METHOD_STYLE_SHEET[method]["zorder"],
+                )
 
     # Add title and labels
     # plt.title("iATE vs. Noise of initialization.")
     # Set x-axis limits to create a separation
-    plt.xlim(-2, n_data + 1)
+    plt.xlim(-1.5, n_data + 1)
 
     # Customize x-axis labels to create a gap and label the isolated column as "inf"
     plt.xticks(
-        [-1.5] + list(range(0, n_data)) + [n_data + 0.5],
-        ["GT"] + list(range(1, n_data + 1)) + ["  None"],
+        [-1.0] + list(range(0, n_data)) + [n_data + 0.5],
+        ["0"] + list(range(1, n_data + 1)) + ["  no init"],
     )
 
-    plt.yscale("log" if LOG_Y_SCALE else "linear")
 
-    plt.xlabel("Noise of initialization (m)")
-    plt.ylabel("iATE(Translation)")
+    plt.yscale("log" if LOG_Y_SCALE else "linear")
+    # remove all the yticks
+
+    plt.yticks(range(0, 8, 2), range(0, 8, 2))
+    # Disable minor ticks (which can cause extra labels to appear)
+    plt.minorticks_off()
+
+    plt.xlabel("Noise in global initialization (m)")
+    plt.ylabel("iATE(Translation) (m)")
     legend()
     plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
 
@@ -282,7 +290,7 @@ def main():
         x=n_data + 0.5, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0
     )
 
-    plt.axvline(x=-1.5, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0)
+    plt.axvline(x=-1.0, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0)
 
     for i in range(2, 10, 2):
         plt.axhline(y=i, color="lightgrey", linestyle="--", linewidth=0.7, zorder=0)
@@ -313,6 +321,9 @@ def main():
         status = aggregated_results["2d_nr"][method]["statuses"]
         # take all of every repeat statuses
         status = np.array(status)
+
+        print(method)
+        print(data)
 
         valid_x, valid_mean, run_status = get_valid_data(data, status, repeat)
 
@@ -352,7 +363,7 @@ def main():
     plt.subplots_adjust(bottom=0.22)  # Add space at the bottom of the figure
 
     plt.xlabel("Number of robots")
-    plt.ylabel("Mean iATE(Translation)")
+    plt.ylabel("Mean iATE(Translation) (m)")
 
     # save svg
     plt.savefig("iate_nr.svg")
@@ -366,7 +377,6 @@ def main():
     plt.grid(True, linestyle="--", zorder=0)
 
     for method in method_list:
-        print(aggregated_results["2d_nr"][method].keys())
         data = aggregated_results["2d_nr"][method]["average_total_runtime"]
         if len(data) == 0:
             continue
@@ -402,6 +412,7 @@ def main():
     # Add title and labels
     plt.xticks(nr_range, nr_range)
     plt.yscale("log")
+    plt.yticks([1,10], [1,10])
     plt.title("Total runtime of different methods")
     plt.xlabel("Number of robots")
     plt.ylabel("Total runtime (s)")

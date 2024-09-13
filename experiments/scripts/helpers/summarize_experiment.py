@@ -96,6 +96,8 @@ def summarize_experiment(
         figsize=[4 if not legend else 6, 3 if experiment_name == "" else 4],
         dpi=200,
     )
+    if num_iv == 1:
+        ax = np.reshape(ax, (2, 1))
     # ax[0].set_yscale("log")  # , linthresh=10)
     fig.suptitle(experiment_name, fontsize=12)
 

@@ -47,7 +47,7 @@ tasks:
     cmds:
       - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" build/experiments/run-trial -d {{.data_file}} -m raido -p {{.param_file}} -o {{.output_dir}} -r 10 -s 0 -t POSE2 -c {{.comm_file}}
     vars:
-      data_file: /workspaces/src/imesa-experiments/data/datasets/2d_10r/2d_0000.jrl
+      data_file: /workspaces/src/imesa-experiments/data/datasets/2d_5r_noised_prior/01_0000.jrl
       output_dir: /workspaces/src/imesa-experiments/outputs
       param_file: /workspaces/src/raido_imesa_experiments/config/raido.json
 
@@ -60,22 +60,22 @@ tasks:
 
   run-all:
     cmds:
-      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 8 -c {{.comm_file}}
+      - source {{.ros_setup}} && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{{.LD_LIBRARY_PATH}}" experiments/scripts/run-experiment -d {{.experiment_dir}} -iv {{.iv}} -m {{.methods}} -p {{.method_configs}} -n 4 -c {{.comm_file}}
     vars:
       iv: >-
         2d_nr
       methods: >-
         raido
+        imesa
         centralized
         independent
-        imesa
         ddfsam2
       config_dir: /workspaces/src/imesa-experiments/experiments/config/methods
       method_configs: >-
         /workspaces/src/raido_imesa_experiments/config/raido.json
-        {{.config_dir}}/independent.json
-        {{.config_dir}}/independent.json
         {{.config_dir}}/imesa.json
+        {{.config_dir}}/independent.json
+        {{.config_dir}}/independent.json
         {{.config_dir}}/ddfsam2.json
 
   summarize-experiment:
@@ -86,22 +86,21 @@ tasks:
       dataset_dir: "{{.experiment_dir}}/datasets"
       result_dir: "{{.experiment_dir}}/results"
       iv: >-
-        2d_10r
-        2d_nr
-        2d_5r_zero_prior
         2d_5r_gt_prior
+        2d_5r_zero_prior
         2d_5r_noised_prior
+        2d_nr
       ivl: >-
-        "10 Robots"
-        "nr Robots"
-        "Zero Prior"
-        "Gt Prior"
+        "GT Prior"
+        "Local Prior"
         "Noised Prior"
+        "NR"
       all_methods: >-
         raido
+        imesa
         centralized
         independent
-        imesa
-        ddfsam2 
+        ddfsam2
+
       xlabel: "methods"
 

@@ -20,6 +20,7 @@ make-2d-noise-prior:
      -o {{dataset_dir}}/2d_{{nr}}r_noised_prior \
      -n $(printf "%02d" $i) \
      -nr {{nr}} \
+     -np 500 \
      -r {{r}} \
      --xlims -50 50 \
      --ylims -50 50 \
@@ -29,16 +30,14 @@ make-2d-noise-prior:
   
 make-2d-gt-prior:
   mkdir -p {{dataset_dir}}/2d_{{nr}}r_gt_prior && \
-  for i in $(seq 1 1 10); do \
-    experiments/scripts/make-multi-robot-dataset-2d \
-     -o {{dataset_dir}}/2d_{{nr}}r_gt_prior \
-     -n $(printf "%02d" $i) \
-     -nr {{nr}} \
-     -r {{r}} \
-     --xlims -50 50 \
-     --ylims -50 50 \
-     --noised_zeros 0 ; \
-  done
+  experiments/scripts/make-multi-robot-dataset-2d \
+    -o {{dataset_dir}}/2d_{{nr}}r_gt_prior \
+    -n {{nr}} \
+    -nr {{nr}} \
+    -r {{r}} \
+    --xlims -50 50 \
+    --ylims -50 50 \
+    --noised_zeros 0 
 
 make-2d-5r-random-prior:
   mkdir -p {{dataset_dir}}/2d_5r_random_prior && \
@@ -75,9 +74,3 @@ make-2d-nr-noise:
      --ylims -50 50 \
      --noised_zeros 3 ; \
   done
-
-echo:
-  mkdir -p {{dataset_dir}}/2d_nr && \
-  for i in $(seq 2 1 20); do \
-    echo  ; \
-  done 

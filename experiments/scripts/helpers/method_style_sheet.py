@@ -46,7 +46,7 @@ METHOD_STYLE_SHEET = {
         "linestyle": "solid",
     },
     "raido_kn": {
-        "name": "RaiDOInit",
+        "name": "RaiDO",
         "color": SNS_RED,
         "symbol": "s",
         "linestyle": "solid",
